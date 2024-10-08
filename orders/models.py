@@ -14,12 +14,17 @@ class Order(models.Model):
     updated_at = models.DateTimeField(auto_now=True)
     products = models.ManyToManyField(Product, through='OrderProduct')
 
+    @property
+    def total_quantity(self):
+        return sum([op.quantity for op in self.order_products.all()])
+
 
 @receiver(post_save, sender=Order)
 def order_create_signal(sender, instance, created, **kwargs):
     if created:
-        from orders.tasks import send_order_creation_notification
+        from orders.tasks import send_order_creation_notification, update_orders_report
         send_order_creation_notification.delay(instance.pk)
+        update_orders_report.delay()
 
 
 class OrderProduct(models.Model):

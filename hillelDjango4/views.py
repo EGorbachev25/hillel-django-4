@@ -1,4 +1,6 @@
 from django.http import HttpResponse
+from django.shortcuts import render
+
 from hillelDjango4.tasks import hello_world_task
 
 
@@ -12,3 +14,7 @@ def hello_world(request):
     hello_world_task.delay(name)
 
     return HttpResponse('Hello, World!')
+
+
+def index(request):
+    return render(request, 'index.html')

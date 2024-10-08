@@ -14,10 +14,12 @@ Including another URLconf
     1. Import the include() function: from django.urls import include, path
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
+from allauth.account.views import LogoutView
 from django.contrib import admin
 from django.urls import path, include
 from drf_yasg import openapi
 from drf_yasg.views import get_schema_view
+from graphene_django.views import GraphQLView
 from rest_framework import permissions
 from rest_framework.authtoken import views as authtoken_views
 from rest_framework.routers import DefaultRouter
@@ -25,7 +27,7 @@ from rest_framework.routers import DefaultRouter
 from orders.viewsets import OrderViewSet
 from products.viewsets import ProductViewSet
 from telegram.views import telegram
-from .views import hello_world
+from .views import hello_world, index
 
 router = DefaultRouter()
 router.register('products', ProductViewSet)
@@ -53,4 +55,8 @@ urlpatterns = [
     path('redoc/', schema_view.with_ui('redoc', cache_timeout=0), name='schema-redoc'),
     path('hello-world', hello_world),
     path('telegram', telegram),
+    path("accounts/", include("allauth.urls")),
+    path("logout/", LogoutView.as_view(), name="logout"),
+    path("graphql", GraphQLView.as_view(graphiql=True)),
+    path("", index, name="index"),
 ]

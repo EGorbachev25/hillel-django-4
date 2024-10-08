@@ -52,6 +52,13 @@ INSTALLED_APPS = [
     "corsheaders",
     "django_filters",
     'drf_yasg',
+    "graphene_django",
+    # All Auth
+    'allauth',
+    'allauth.account',
+    'allauth.socialaccount',
+    'allauth.socialaccount.providers.google',
+    'allauth.socialaccount.providers.github',
     # Local (self-written) apps
     'products',
     'orders',
@@ -69,6 +76,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    "allauth.account.middleware.AccountMiddleware",
 ]
 
 ROOT_URLCONF = 'hillelDjango4.urls'
@@ -195,3 +203,103 @@ CORS_ALLOWED_ORIGINS = [
 STATIC_ROOT = BASE_DIR / 'static'
 
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL')
+
+
+CELERY_BEAT_SCHEDULE = {
+    'report_orders_total': {
+        'task': 'orders.tasks.update_orders_total_report',
+        # every 60 seconds
+        'schedule': 10.0,
+        # every day at 00:00
+        # 'schedule': "crontab(hour=0, minute=0)",
+        # cron syntax
+        # 'schedule': "0 0 * * *",
+    },
+    'test_celery': {
+        'task': 'orders.tasks.test_celery',
+        # every 60 seconds
+        'schedule': 1.0,
+    },
+}
+
+CELERY_RESULT_BACKEND = 'db+postgresql://vitalii.pavliuk:postgres@localhost/celery_db'
+
+
+# Additional Celery settings
+CELERY_ACCEPT_CONTENT = ['json']
+CELERY_TASK_SERIALIZER = 'json'
+CELERY_RESULT_SERIALIZER = 'json'
+CELERY_TIMEZONE = 'UTC'
+
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'allauth.account.auth_backends.AuthenticationBackend',
+]
+
+# Provider specific settings
+SOCIALACCOUNT_PROVIDERS = {
+    'google': {
+        # For each OAuth based provider, either add a ``SocialApp``
+        # (``socialaccount`` app) containing the required client
+        # credentials, or list them here:
+        'SCOPE': [
+            'profile',
+            'email',
+            # Access to Google Sheets and Google Drive
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive',
+        ],
+        # Access type (online or offline)
+        'AUTH_PARAMS': {
+            'access_type': 'offline',
+        }
+    },
+    'github': {},
+}
+
+# Django-allauth
+SITE_ID = 2
+
+
+SOCIALACCOUNT_STORE_TOKENS = True
+
+# Email to file
+# # Email settings
+# EMAIL_BACKEND = 'django.core.mail.backends.filebased.EmailBackend'
+# EMAIL_FILE_PATH = os.path.join(BASE_DIR, 'sent_emails')
+
+EMAIL_HOST = 'smtp.sendgrid.net'
+EMAIL_HOST_USER = os.environ.get('SENDGRID_USERNAME')
+EMAIL_HOST_PASSWORD = os.environ.get('SENDGRID_PASSWORD')
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+DEFAULT_FROM_EMAIL = 'vitalii@vitalii.tech'  # this is the sendgrid email
+
+GRAPHENE = {
+    "SCHEMA": "hillelDjango4.schema.schema"
+}
+
+
+# Log all SQL queries
+LOGGING = {
+    'version': 1,
+    'filters': {
+        'require_debug_true': {
+            '()': 'django.utils.log.RequireDebugTrue',
+        }
+    },
+    'handlers': {
+        'console': {
+            'level': 'DEBUG',
+            'filters': ['require_debug_true'],
+            'class': 'logging.StreamHandler',
+        }
+    },
+    'loggers': {
+        'django.db.backends': {
+            'level': 'DEBUG',
+            'handlers': ['console'],
+        }
+    }
+}
