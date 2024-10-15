@@ -27,7 +27,7 @@ from rest_framework.routers import DefaultRouter
 from orders.viewsets import OrderViewSet
 from products.viewsets import ProductViewSet
 from telegram.views import telegram
-from .views import hello_world, index
+from .views import hello_world, index, current_time
 
 router = DefaultRouter()
 router.register('products', ProductViewSet)
@@ -58,5 +58,6 @@ urlpatterns = [
     path("accounts/", include("allauth.urls")),
     path("logout/", LogoutView.as_view(), name="logout"),
     path("graphql", GraphQLView.as_view(graphiql=True)),
+    path("time", current_time, name="time"),
     path("", index, name="index"),
 ]
